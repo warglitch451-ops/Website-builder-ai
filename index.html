@@ -1,0 +1,1055 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090b10">
+<title>ForgeAI — AI Website Studio</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#090b10; --panel:#111622; --panel2:#191f2d;
+  --line:#2b3345; --text:#f4f6fc; --muted:#9aa5b9;
+  --gold:#f2c66d; --green:#6de0a8; --red:#ff8585;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.5 system-ui,Arial,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);
+  color:var(--text);padding:10px 12px;border-radius:9px}
+button:hover{border-color:#7d8ba7}
+button:disabled{opacity:.5;cursor:wait}
+.primary{background:var(--gold);color:#191307;border-color:var(--gold);font-weight:750}
+.danger{color:#ff9999}
+input,textarea,select{width:100%;min-width:0;background:#090d14;
+  color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px}
+textarea{resize:vertical;min-height:105px}
+label{font-size:12px;color:#bbc4d5}
+.field{display:grid;gap:6px;min-width:0}
+.shell{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:100vh}
+.sidebar{padding:16px 11px;background:#0c0f16;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:18px}
+.logo{font-weight:950;font-size:20px;letter-spacing:.08em}
+.logo small{display:block;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0}
+.nav{display:grid;gap:6px}
+.nav button{text-align:left;background:transparent;border-color:transparent;color:#c2cada}
+.nav button.active{background:#262136;border-color:#443956;color:white}
+.sidebar-foot{margin-top:auto;color:var(--muted);font-size:11px}
+main{min-width:0}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;padding:12px 16px;
+  background:#0b0e15ed;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.actions,.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.content{max-width:1500px;margin:auto;padding:15px;display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+h2{font-size:17px;margin:0 0 3px}
+.sub,.hint,.status{font-size:12px;color:var(--muted)}
+.status{overflow-wrap:anywhere;margin:10px 0 0}
+.ok{color:var(--green)}.error{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.workgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.badge{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:4px 8px;color:var(--muted)}
+.notice{background:#2b2112;border:1px solid #5c4826;color:#ead7a6;
+  padding:11px;border-radius:9px;font-size:12px}
+.chatbox{height:190px;overflow:auto;background:#090d14;border:1px solid var(--line);
+  border-radius:9px;padding:9px;display:flex;flex-direction:column;gap:8px}
+.message{white-space:pre-wrap;overflow-wrap:anywhere;background:#1b2231;
+  padding:9px;border-radius:9px}
+.message.user{background:#352919}
+.message.error{border:1px solid #853e47}
+.code{width:100%;height:430px;min-height:250px;resize:vertical;
+  font:12px/1.5 ui-monospace,Consolas,monospace;background:#080b10;color:#e1eaff}
+.preview{overflow:hidden;background:white;border-radius:9px;margin:auto;width:100%}
+.preview iframe{display:block;width:100%;height:650px;border:0;background:white}
+.hidden{display:none!important}
+footer{font-size:11px;color:var(--muted);padding:0 0 18px}
+@media(max-width:850px){
+ .shell{grid-template-columns:1fr}
+ .sidebar{border-right:0;border-bottom:1px solid var(--line);padding:10px;gap:10px}
+ .nav{display:flex;overflow:auto}
+ .nav button{white-space:nowrap}
+ .sidebar-foot{display:none}
+ .topbar{align-items:flex-start;flex-direction:column}
+ .workgrid{grid-template-columns:1fr}
+ .content{padding:9px}
+ .preview iframe{height:570px}
+}
+@media(max-width:520px){
+ .grid2{grid-template-columns:1fr}
+ .panel{padding:11px}
+ .topbar .actions{width:100%}
+ .topbar .actions button{flex:1}
+ .preview iframe{height:520px}
+}
+</style>
+</head>
+
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo">FORGEAI<small>BUILD · EDIT · PREVIEW · EXPORT</small></div>
+    <nav class="nav">
+      <button class="active" data-page="studio">✦ Website Studio</button>
+      <button data-page="settings">⚙ AI Settings</button>
+      <button data-page="projects">▣ Projects & Backup</button>
+    </nav>
+    <div class="sidebar-foot">Prototype workspace · Save backups regularly</div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <b id="pageTitle">AI Website Studio</b>
+        <div class="sub">Build websites with AI, then refine the code.</div>
+      </div>
+      <div class="actions">
+        <button id="undo">↶ Undo</button>
+        <button id="redo">↷ Redo</button>
+        <button class="primary" id="saveProject">Save project</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- WEBSITE STUDIO -->
+      <section id="studio">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>AI Website Studio</h2>
+              <div class="sub">Describe what you want to build.</div>
+            </div>
+            <span class="badge">AI Generation</span>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="projectName">Project name</label>
+              <input id="projectName" value="NOVA X1 — 3D Sneaker">
+            </div>
+            <div class="field">
+              <label for="siteType">Website type</label>
+              <select id="siteType">
+                <option>Product landing page</option>
+                <option>Restaurant</option>
+                <option>Portfolio</option>
+                <option>E-commerce storefront</option>
+                <option>SaaS website</option>
+                <option>Agency website</option>
+                <option>Custom</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:11px">
+            <label for="brief">What should the AI create?</label>
+            <textarea id="brief">Create a premium, cinematic 3D sneaker landing page for NOVA X1. Use a dark studio, orange lighting, bold typography, a CSS 3D sneaker illustration, interactive color buttons, product features, smooth scrolling, subtle animations, and a polished responsive mobile layout. Create a complete standalone HTML website.</textarea>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <button class="primary" id="generate">✦ Generate website</button>
+            <button id="loadStarter">Load starter website</button>
+            <button id="clearBrief">Clear prompt</button>
+          </div>
+          <p class="status" id="studioStatus" role="status">Ready. Configure AI Settings to enable generation.</p>
+        </div>
+
+        <div class="workgrid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>AI Chat Editor</h2>
+                <div class="sub">Tell AI what to change in your current website.</div>
+              </div>
+              <span class="badge">Edit</span>
+            </div>
+
+            <div class="chatbox" id="chatbox" aria-live="polite">
+              <div class="message">Welcome to ForgeAI. Load the starter website or generate a new website, then ask for edits.</div>
+            </div>
+
+            <div class="field" style="margin-top:10px">
+              <label for="editPrompt">Your edit instruction</label>
+              <textarea id="editPrompt" style="min-height:80px"
+                placeholder="Example: Improve the hero animation without changing the rest of the website."></textarea>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="primary" id="sendEdit">Send edit ↗</button>
+              <button class="quick" data-prompt="Make the website more premium, polished and visually consistent. Preserve existing sections and functionality.">Luxury upgrade</button>
+              <button class="quick" data-prompt="Improve the 3D CSS product illustration, lighting, perspective and subtle motion. Preserve other sections.">3D polish</button>
+              <button class="quick" data-prompt="Fix mobile layout, spacing, navigation and horizontal overflow without damaging desktop layout.">Fix mobile</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Manual Code Editor</h2>
+                <div class="sub">Edit HTML yourself and apply it to preview.</div>
+              </div>
+              <span class="badge" id="charCount">0 characters</span>
+            </div>
+            <textarea id="code" class="code" spellcheck="false" aria-label="Website HTML"></textarea>
+            <div class="row" style="margin-top:8px">
+              <button class="primary" id="applyCode">Apply code to preview</button>
+              <button id="codeHelp">Code tips</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Live Website Preview</h2>
+              <div class="sub">Preview your current HTML in an isolated iframe.</div>
+            </div>
+            <span class="badge">Live preview</span>
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <button id="refreshPreview">Refresh</button>
+            <button id="desktopPreview">Desktop</button>
+            <button id="mobilePreview">Mobile</button>
+          </div>
+          <div class="preview" id="preview">
+            <iframe id="frame" title="Website preview"
+              sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI SETTINGS -->
+      <section id="settings" class="hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>AI Settings</h2>
+              <div class="sub">Configure, save and test your AI connection.</div>
+            </div>
+            <span class="badge">Gemini API</span>
+          </div>
+
+          <div class="notice">
+            Security warning: GitHub Pages is a public static website. A key used directly
+            by browser JavaScript can be discovered by users or through browser debugging.
+            Saving a key in this browser is convenient for prototype testing, not safe for
+            a public commercial product. For production, use a backend that keeps the key
+            in a server environment variable.
+          </div>
+
+          <div class="field" style="margin-top:13px">
+            <label for="apiKey">Gemini API key</label>
+            <div class="row">
+              <input id="apiKey" type="password" autocomplete="off"
+                placeholder="Paste your Gemini API key" style="flex:1">
+              <button id="toggleKey">Show</button>
+            </div>
+            <div class="hint">The key is never inserted into exported website HTML.</div>
+          </div>
+
+          <div class="grid2" style="margin-top:12px">
+            <div class="field">
+              <label for="model">Gemini model</label>
+              <select id="model">
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="custom">Custom model ID…</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="customModel">Custom model ID</label>
+              <input id="customModel" placeholder="Exact model ID from Google AI Studio" disabled>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px">
+            <label for="backend">Secure backend endpoint (optional)</label>
+            <input id="backend" placeholder="https://your-domain.example/api/generate">
+            <div class="hint">
+              Backend request JSON: { "prompt": "...", "currentHtml": "...", "mode": "generate" }.
+              Expected response JSON: { "html": "..." } or { "text": "..." }.
+              Your backend must authenticate users and enforce rate limits.
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:13px">
+            <button class="primary" id="saveSettings">Save API & settings</button>
+            <button id="testConnection">Test AI connection</button>
+            <button class="danger" id="forgetKey">Forget saved key</button>
+          </div>
+          <p id="settingsStatus" class="status" role="status">Not tested yet.</p>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects" class="hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Projects & Backup</h2>
+              <div class="sub">Projects are stored in this browser.</div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="projectList">Saved projects</label>
+              <select id="projectList"></select>
+            </div>
+            <div class="row" style="align-items:end">
+              <button id="openProject">Open</button>
+              <button id="newProject">New project</button>
+              <button id="deleteProject" class="danger">Delete</button>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:14px">
+            <button class="primary" id="backupWorkspace">Download JSON backup</button>
+            <button id="importBackup">Import JSON backup</button>
+            <input id="backupFile" class="hidden" type="file" accept=".json,application/json">
+            <button id="exportHtml">Export website HTML</button>
+          </div>
+          <p class="status" id="projectStatus" role="status">
+            Save projects and download backups regularly.
+          </p>
+        </div>
+      </section>
+
+      <footer>ForgeAI prototype · Check AI-generated code before publishing.</footer>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(() => {
+  const $ = id => document.getElementById(id);
+  const PROJECTS_KEY = "forgeai_projects_v4";
+  const SETTINGS_KEY = "forgeai_settings_v4";
+
+  let activeId = "default";
+  let currentHtml = "";
+  let undoStack = [];
+  let redoStack = [];
+  let busy = false;
+
+  // A complete starter website with a CSS 3D-style sneaker illustration.
+  const STARTER_HTML = String.raw`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVA X1 — Engineered for Motion</title>
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#09090b;color:#f7f3ee;font-family:Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:22px 7%;border-bottom:1px solid #ffffff24;position:sticky;top:0;background:#09090bee;z-index:5}
+.logo{font-weight:900;letter-spacing:.2em}
+.links{display:flex;gap:22px;font-size:12px}
+.hero{min-height:83vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:7%;overflow:hidden;background:radial-gradient(ellipse at 75% 45%,#65280e,transparent 40%),#09090b}
+.eyebrow{color:#ff7839;letter-spacing:.22em;font-size:11px}
+h1{font-size:clamp(48px,8vw,110px);line-height:.88;letter-spacing:-.08em;margin:23px 0}
+.hero p,.feature p{color:#b7b2ae;line-height:1.8;max-width:420px}
+.btn{display:inline-block;margin-top:18px;padding:15px 20px;background:#ff7839;color:#180b04;font-size:11px;font-weight:bold;letter-spacing:.1em}
+.stage{height:350px;display:grid;place-items:center;perspective:900px}
+.shoe{position:relative;width:min(390px,90%);height:150px;transform:rotate(-18deg);animation:float 5s ease-in-out infinite;filter:drop-shadow(0 35px 24px #000)}
+.sole{position:absolute;bottom:0;width:100%;height:38px;background:linear-gradient(#f4e5ce,#958b81);border-radius:20% 20% 35% 25%;transform:skewX(-20deg)}
+.upper{position:absolute;bottom:28px;left:4%;width:90%;height:105px;background:linear-gradient(150deg,#fff7eb,#898786 50%,#242427);border-radius:65% 32% 18% 22%;transform:skewX(-20deg);box-shadow:inset -15px -8px 22px #111}
+.stripe{position:absolute;left:44%;top:34px;width:90px;height:70px;border:9px solid #ff7839;border-left:0;border-bottom:0;transform:skewX(-25deg) rotate(15deg);border-radius:0 30px 0 0}
+.laces{position:absolute;left:32%;top:39px;width:95px;height:4px;background:#252326;transform:rotate(-12deg);box-shadow:0 13px #252326,0 26px #252326,0 39px #252326}
+.section{padding:85px 8%;border-top:1px solid #ffffff1b}
+.section h2{font-size:clamp(34px,6vw,72px);letter-spacing:-.06em}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.feature{border:1px solid #ffffff25;padding:24px;background:linear-gradient(135deg,#19191c,#0b0b0d)}
+.feature small{color:#ff7839}
+.feature p{font-size:14px}
+.swatches{display:flex;gap:12px}
+.swatch{width:36px;height:36px;border:2px solid #ffffff66;border-radius:50%;cursor:pointer}
+.footer{padding:35px 8%;display:flex;justify-content:space-between;color:#999;border-top:1px solid #ffffff25}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-18deg)}50%{transform:translateY(-18px) rotate(-14deg)}}
+@media(max-width:680px){.hero{grid-template-columns:1fr;padding-top:55px}.hero h1{font-size:64px}.stage{height:245px}.features{grid-template-columns:1fr}.section{padding:55px 7%}.links{gap:9px;font-size:10px}.footer{flex-direction:column;gap:10px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="logo" href="#">NOVA / X1</a><div class="links"><a href="#tech">TECHNOLOGY</a><a href="#colors">COLORWAYS</a><a href="#discover">DISCOVER</a></div></nav>
+<main>
+<section class="hero"><div><div class="eyebrow">ENGINEERED FOR WHAT'S NEXT</div><h1>BUILT TO<br>BREAK THE<br><span style="color:#ff7839">LIMIT.</span></h1><p>NOVA X1 brings precision engineering and fearless design together. Built for motion. Made to stand apart.</p><a class="btn" href="#tech">EXPLORE TECHNOLOGY ↗</a></div>
+<div class="stage"><div class="shoe"><div class="sole"></div><div class="upper"></div><div class="stripe"></div><div class="laces"></div></div></div></section>
+<section class="section" id="tech"><div class="eyebrow">01 / PERFORMANCE</div><h2>EVERY DETAIL.<br>ON PURPOSE.</h2><div class="features">
+<article class="feature"><small>01 — ENERGY</small><h3>Responsive cushioning</h3><p>Soft landings and confident takeoffs with a comfort-first platform.</p></article>
+<article class="feature"><small>02 — WEIGHT</small><h3>Engineered mesh</h3><p>Breathable layered construction designed to move with you.</p></article>
+<article class="feature"><small>03 — GRIP</small><h3>Adaptive traction</h3><p>Purposeful outsole geometry for everyday movement.</p></article>
+</div></section>
+<section class="section" id="colors"><div class="eyebrow">02 / YOUR COLORWAY</div><h2>MAKE IT YOURS.</h2><p>Choose an accent color.</p><div class="swatches">
+<button class="swatch" data-color="#ff7839" style="background:#ff7839" aria-label="Orange"></button>
+<button class="swatch" data-color="#62a8ff" style="background:#62a8ff" aria-label="Blue"></button>
+<button class="swatch" data-color="#c5f06b" style="background:#c5f06b" aria-label="Lime"></button>
+</div></section>
+<section class="section" id="discover"><div class="eyebrow">03 / YOUR NEXT MOVE</div><h2>MOVE DIFFERENT.</h2><p>Meet the next expression of performance design.</p><a class="btn" href="#">DISCOVER NOVA X1</a></section>
+</main>
+<footer class="footer"><b>NOVA / X1</b><span>Designed for motion. Built for possibility.</span></footer>
+<script>
+document.querySelectorAll(".swatch").forEach(b=>b.addEventListener("click",()=>{
+const color=b.dataset.color;
+document.querySelectorAll(".eyebrow").forEach(e=>e.style.color=color);
+document.querySelectorAll(".btn").forEach(e=>e.style.background=color);
+document.querySelectorAll(".stripe").forEach(e=>e.style.borderColor=color);
+}));
+<\/script>
+</body></html>`;
+
+  function getSettings() {
+    return {
+      key: $("apiKey").value.trim(),
+      model: $("model").value === "custom"
+        ? $("customModel").value.trim()
+        : $("model").value,
+      backend: $("backend").value.trim()
+    };
+  }
+
+  function setStatus(message, kind = "") {
+    $("studioStatus").textContent = message;
+    $("studioStatus").className = "status " + kind;
+  }
+
+  function setSettingsStatus(message, kind = "") {
+    $("settingsStatus").textContent = message;
+    $("settingsStatus").className = "status " + kind;
+  }
+
+  function projects() {
+    try {
+      const value = JSON.parse(localStorage.getItem(PROJECTS_KEY) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSettings(showMessage = true) {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(getSettings()));
+      if (showMessage) {
+        setSettingsStatus(
+          "Settings saved in this browser. Remember: browser storage is not secure for production keys.",
+          "ok"
+        );
+      }
+      return true;
+    } catch {
+      setSettingsStatus("Could not save settings. Browser storage may be disabled.", "error");
+      return false;
+    }
+  }
+
+  function loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+      $("apiKey").value = s.key || "";
+      $("backend").value = s.backend || "";
+
+      if (s.model) {
+        if ([...$("model").options].some(o => o.value === s.model)) {
+          $("model").value = s.model;
+        } else {
+          $("model").value = "custom";
+          $("customModel").value = s.model;
+        }
+      }
+    } catch {}
+    $("customModel").disabled = $("model").value !== "custom";
+  }
+
+  function currentProject() {
+    return {
+      id: activeId,
+      name: $("projectName").value.trim() || "Untitled project",
+      type: $("siteType").value,
+      brief: $("brief").value,
+      html: $("code").value,
+      updated: new Date().toISOString()
+    };
+  }
+
+  function refreshProjectList() {
+    const list = $("projectList");
+    list.replaceChildren();
+
+    projects().forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled project";
+      list.appendChild(opt);
+    });
+
+    if (!list.options.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No saved projects";
+      list.appendChild(opt);
+    }
+
+    if (projects().some(p => p.id === activeId)) list.value = activeId;
+  }
+
+  function saveProject(showMessage = true) {
+    const p = currentProject();
+    let list = projects();
+    const index = list.findIndex(item => item.id === activeId);
+
+    if (index >= 0) list[index] = p;
+    else list.unshift(p);
+
+    try {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(list));
+      refreshProjectList();
+      if (showMessage) {
+        $("projectStatus").textContent = "Saved locally: " + p.name;
+        setStatus("Project saved in this browser.", "ok");
+      }
+      return true;
+    } catch {
+      setStatus("Storage is full or unavailable. Export your HTML or backup.", "error");
+      return false;
+    }
+  }
+
+  function updateHistoryButtons() {
+    $("undo").disabled = undoStack.length === 0;
+    $("redo").disabled = redoStack.length === 0;
+  }
+
+  function setHtml(html, recordHistory = true) {
+    if (recordHistory && currentHtml && currentHtml !== html) {
+      undoStack.push(currentHtml);
+      if (undoStack.length > 30) undoStack.shift();
+      redoStack = [];
+    }
+
+    currentHtml = html;
+    $("code").value = html;
+    $("charCount").textContent = html.length.toLocaleString() + " characters";
+    $("frame").srcdoc = html;
+    updateHistoryButtons();
+  }
+
+  function addMessage(text, who = "ai", isError = false) {
+    const el = document.createElement("div");
+    el.className = "message" +
+      (who === "user" ? " user" : "") +
+      (isError ? " error" : "");
+    el.textContent = (who === "user" ? "You: " : "ForgeAI: ") + text;
+    $("chatbox").appendChild(el);
+    $("chatbox").scrollTop = $("chatbox").scrollHeight;
+  }
+
+  function setBusy(value) {
+    busy = value;
+    ["generate", "sendEdit", "testConnection"].forEach(id => {
+      $(id).disabled = value;
+    });
+  }
+
+  function selectedModel() {
+    const model = getSettings().model;
+    return model || "gemini-2.5-flash";
+  }
+
+  async function requestAI(mode, userPrompt) {
+    const settings = getSettings();
+
+    if (!settings.backend && !settings.key) {
+      throw new Error("No API key saved. Open AI Settings, enter your key, and tap Save API & settings.");
+    }
+
+    let prompt;
+
+    if (mode === "test") {
+      prompt = "Reply with exactly this text: FORGEAI_CONNECTION_OK";
+    } else if (mode === "generate") {
+      prompt = [
+        "You are ForgeAI, an expert frontend engineer and web designer.",
+        "Create a complete, professional, responsive website for the following brief:",
+        userPrompt,
+        "",
+        "Requirements:",
+        "- Return one complete standalone HTML document.",
+        "- Include <!DOCTYPE html>, html, head, body, embedded CSS and JavaScript.",
+        "- Make the design visually polished, mobile responsive and functional.",
+        "- Do not wrap the result in Markdown code fences.",
+        "- Do not output explanations before or after the HTML.",
+        "- Use CSS 3D effects where appropriate. Do not pretend a CSS illustration is a real 3D model."
+      ].join("\n");
+    } else {
+      prompt = [
+        "You are editing an existing website in ForgeAI.",
+        "Apply the user's request to the current HTML.",
+        "Return the COMPLETE standalone HTML document only, with no Markdown fences.",
+        "Preserve unrelated sections, styling and working features.",
+        "Do not replace the entire design with a generic template unless explicitly requested.",
+        "Do not claim external services work unless implemented.",
+        "",
+        "USER REQUEST:",
+        userPrompt,
+        "",
+        "CURRENT WEBSITE HTML:",
+        currentHtml.slice(0, 45000)
+      ].join("\n");
+    }
+
+    // Preferred for production: send the prompt through your own secure backend.
+    if (settings.backend) {
+      let response;
+
+      try {
+        response = await fetch(settings.backend, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt,
+            currentHtml: currentHtml.slice(0, 45000),
+            mode
+          }),
+          signal: AbortSignal.timeout(90000)
+        });
+      } catch (err) {
+        throw new Error("Could not reach backend. Check its URL, CORS policy, and server status. " + err.message);
+      }
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Backend request failed: HTTP " + response.status);
+      }
+
+      const text = data.html || data.text || data.result || "";
+      if (!text) throw new Error("Backend returned no HTML or text.");
+      return text;
+    }
+
+    // Prototype mode: Gemini is called directly from the browser.
+    let response;
+
+    try {
+      response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+          encodeURIComponent(selectedModel()) + ":generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": settings.key
+          },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: mode === "edit" ? 0.25 : 0.65,
+              maxOutputTokens: 8192
+            }
+          }),
+          signal: AbortSignal.timeout(90000)
+        }
+      );
+    } catch (err) {
+      throw new Error("Could not reach Gemini. Check your internet connection and browser support. " + err.message);
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const apiMessage = data.error?.message || "HTTP " + response.status;
+      if (response.status === 400) {
+        throw new Error("Gemini rejected the request: " + apiMessage + " Check the exact model ID and request.");
+      }
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("API authentication/access failed: " + apiMessage + " Check your key, API access, and restrictions.");
+      }
+      if (response.status === 404) {
+        throw new Error("Model not found. Confirm the exact model ID available to your account. " + apiMessage);
+      }
+      if (response.status === 429) {
+        throw new Error("Gemini quota or rate limit reached. Check your API quota and billing settings.");
+      }
+      throw new Error("Gemini API error: " + apiMessage);
+    }
+
+    const candidate = data.candidates && data.candidates[0];
+    if (!candidate) {
+      throw new Error("Gemini returned no response. " +
+        (data.promptFeedback?.blockReason || "Try changing your prompt."));
+    }
+
+    const result = (candidate.content?.parts || [])
+      .map(part => part.text || "")
+      .join("\n");
+
+    if (!result.trim()) throw new Error("Gemini returned an empty response.");
+    if (candidate.finishReason === "MAX_TOKENS") {
+      throw new Error("The AI response was truncated. Try a shorter prompt.");
+    }
+
+    return result;
+  }
+
+  function extractHtml(text) {
+    let html = text.trim();
+    html = html.replace(/^```(?:html)?\s*/i, "").replace(/\s*```$/, "");
+
+    const lower = html.toLowerCase();
+    const doctype = lower.indexOf("<!doctype");
+    const htmlStart = lower.indexOf("<html");
+    const start = doctype >= 0 ? doctype : htmlStart;
+
+    if (start > 0) html = html.slice(start);
+
+    if (!/<html[\s>]/i.test(html) ||
+        !/<body[\s>]/i.test(html) ||
+        !/<\/html\s*>/i.test(html)) {
+      throw new Error("AI did not return a complete HTML document. Your existing website was preserved. Try a shorter prompt.");
+    }
+
+    return html;
+  }
+
+  async function runAI(mode) {
+    if (busy) return;
+
+    const prompt = mode === "generate"
+      ? $("brief").value.trim()
+      : $("editPrompt").value.trim();
+
+    if (mode !== "test" && !prompt) {
+      setStatus("Enter a website prompt or edit instruction.", "error");
+      return;
+    }
+
+    // Save any unsaved settings before a request.
+    if (!saveSettings(false)) return;
+
+    setBusy(true);
+    setStatus(
+      mode === "generate" ? "Generating your website… this may take a little while." :
+      mode === "edit" ? "AI is editing your website…" :
+      "Testing Gemini connection…"
+    );
+
+    try {
+      const result = await requestAI(mode, prompt);
+
+      if (mode === "test") {
+        setSettingsStatus("Connection successful. Response: " + result.slice(0, 120), "ok");
+        return;
+      }
+
+      const html = extractHtml(result);
+      setHtml(html, true);
+
+      if (mode === "generate") {
+        $("chatbox").replaceChildren();
+        addMessage("Website generated. Review the preview and ask for targeted changes.");
+      } else {
+        addMessage(prompt, "user");
+        addMessage("Edit applied. Check the preview. Use Undo if you prefer the previous version.");
+        $("editPrompt").value = "";
+      }
+
+      saveProject(false);
+      setStatus(
+        mode === "generate"
+          ? "Website generated and saved locally."
+          : "Edit applied and saved locally.",
+        "ok"
+      );
+    } catch (err) {
+      const message = err?.message || "Unexpected error.";
+      setStatus(message, "error");
+
+      if (mode === "test") setSettingsStatus(message, "error");
+      if (mode === "edit") addMessage(message, "ai", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function downloadFile(filename, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function safeFilename(name) {
+    return (name || "forgeai-website")
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "forgeai-website";
+  }
+
+  function showPage(name) {
+    ["studio", "settings", "projects"].forEach(id => {
+      $(id).classList.toggle("hidden", id !== name);
+    });
+
+    document.querySelectorAll("[data-page]").forEach(button => {
+      button.classList.toggle("active", button.dataset.page === name);
+    });
+
+    $("pageTitle").textContent =
+      name === "studio" ? "AI Website Studio" :
+      name === "settings" ? "AI Settings" : "Projects & Backup";
+  }
+
+  // Navigation
+  document.querySelectorAll("[data-page]").forEach(button => {
+    button.addEventListener("click", () => showPage(button.dataset.page));
+  });
+
+  // AI settings
+  $("saveSettings").addEventListener("click", () => saveSettings(true));
+
+  $("toggleKey").addEventListener("click", () => {
+    const hidden = $("apiKey").type === "password";
+    $("apiKey").type = hidden ? "text" : "password";
+    $("toggleKey").textContent = hidden ? "Hide" : "Show";
+  });
+
+  $("model").addEventListener("change", () => {
+    $("customModel").disabled = $("model").value !== "custom";
+  });
+
+  $("forgetKey").addEventListener("click", () => {
+    $("apiKey").value = "";
+    const s = getSettings();
+    s.key = "";
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+      setSettingsStatus("Saved API key removed from this browser.", "ok");
+    } catch {
+      setSettingsStatus("Could not update browser storage.", "error");
+    }
+  });
+
+  $("testConnection").addEventListener("click", () => runAI("test"));
+
+  // Generate and edit
+  $("generate").addEventListener("click", () => runAI("generate"));
+  $("sendEdit").addEventListener("click", () => runAI("edit"));
+
+  $("editPrompt").addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") runAI("edit");
+  });
+
+  document.querySelectorAll(".quick").forEach(button => {
+    button.addEventListener("click", () => {
+      $("editPrompt").value = button.dataset.prompt;
+      $("editPrompt").focus();
+    });
+  });
+
+  $("clearBrief").addEventListener("click", () => {
+    $("brief").value = "";
+    $("brief").focus();
+  });
+
+  $("loadStarter").addEventListener("click", () => {
+    if (currentHtml && !confirm("Replace the current code with the starter website?")) return;
+    setHtml(STARTER_HTML, true);
+    saveProject(false);
+    setStatus("Starter website loaded. You can preview it or edit it with AI.", "ok");
+  });
+
+  // Manual editor
+  $("code").addEventListener("input", () => {
+    $("charCount").textContent = $("code").value.length.toLocaleString() + " characters";
+  });
+
+  $("applyCode").addEventListener("click", () => {
+    try {
+      const html = extractHtml($("code").value);
+      setHtml(html, true);
+      saveProject(false);
+      setStatus("Code applied to preview.", "ok");
+    } catch (err) {
+      setStatus(err.message, "error");
+    }
+  });
+
+  $("codeHelp").addEventListener("click", () => {
+    alert("Tips:\n1. Keep a complete HTML document.\n2. Apply code to refresh the preview.\n3. Save before large changes.\n4. Use Undo if an edit breaks the page.\n5. Never put API keys into website source code.");
+  });
+
+  // Undo / redo
+  $("undo").addEventListener("click", () => {
+    if (!undoStack.length) return;
+    redoStack.push(currentHtml);
+    setHtml(undoStack.pop(), false);
+    saveProject(false);
+  });
+
+  $("redo").addEventListener("click", () => {
+    if (!redoStack.length) return;
+    undoStack.push(currentHtml);
+    setHtml(redoStack.pop(), false);
+    saveProject(false);
+  });
+
+  // Preview
+  $("refreshPreview").addEventListener("click", () => {
+    $("frame").srcdoc = $("code").value;
+    setStatus("Preview refreshed.");
+  });
+
+  $("mobilePreview").addEventListener("click", () => {
+    $("preview").style.maxWidth = "390px";
+    $("preview").style.margin = "auto";
+  });
+
+  $("desktopPreview").addEventListener("click", () => {
+    $("preview").style.maxWidth = "";
+    $("preview").style.margin = "auto";
+  });
+
+  // Projects
+  $("saveProject").addEventListener("click", () => saveProject(true));
+
+  $("openProject").addEventListener("click", () => {
+    const p = projects().find(item => item.id === $("projectList").value);
+    if (!p) {
+      $("projectStatus").textContent = "Select a saved project first.";
+      return;
+    }
+
+    activeId = p.id;
+    $("projectName").value = p.name || "Untitled project";
+    $("siteType").value = p.type || "Custom";
+    $("brief").value = p.brief || "";
+    setHtml(p.html || STARTER_HTML, false);
+    $("projectStatus").textContent = "Opened: " + p.name;
+    showPage("studio");
+  });
+
+  $("newProject").addEventListener("click", () => {
+    saveProject(false);
+    activeId = "project-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+    $("projectName").value = "New ForgeAI Project";
+    $("siteType").value = "Custom";
+    $("brief").value = "";
+    $("editPrompt").value = "";
+    setHtml(STARTER_HTML, false);
+    saveProject(false);
+    $("projectStatus").textContent = "New project created. Rename it and start building.";
+    showPage("studio");
+  });
+
+  $("deleteProject").addEventListener("click", () => {
+    const id = $("projectList").value;
+    if (!id) return;
+    if (!confirm("Delete this saved project from this browser?")) return;
+
+    const remaining = projects().filter(item => item.id !== id);
+
+    try {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(remaining));
+      refreshProjectList();
+
+      if (id === activeId) {
+        activeId = "project-" + Date.now();
+        $("projectName").value = "New Project";
+        setHtml(STARTER_HTML, false);
+        saveProject(false);
+      }
+
+      $("projectStatus").textContent = "Project deleted.";
+    } catch {
+      $("projectStatus").textContent = "Could not delete project.";
+    }
+  });
+
+  // Backup and import
+  $("backupWorkspace").addEventListener("click", () => {
+    saveProject(false);
+    downloadFile(
+      "forgeai-workspace-backup.json",
+      JSON.stringify({ version: 4, projects: projects() }, null, 2),
+      "application/json"
+    );
+  });
+
+  $("importBackup").addEventListener("click", () => $("backupFile").click());
+
+  $("backupFile").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const data = JSON.parse(await file.text());
+      const incoming = Array.isArray(data) ? data : data.projects;
+
+      if (!Array.isArray(incoming)) throw new Error("This file does not contain a projects array.");
+
+      const merged = projects();
+
+      incoming.forEach(item => {
+        if (!item || typeof item.html !== "string") return;
+        const index = merged.findIndex(existing => existing.id === item.id);
+
+        if (index >= 0) merged[index] = item;
+        else merged.push(item);
+      });
+
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(merged));
+      refreshProjectList();
+      $("projectStatus").textContent = "Backup imported successfully.";
+    } catch (err) {
+      $("projectStatus").textContent = "Import failed: " + err.message;
+    } finally {
+      event.target.value = "";
+    }
+  });
+
+  $("exportHtml").addEventListener("click", () => {
+    const html = $("code").value.trim();
+
+    if (!html) {
+      setStatus("There is no website code to export.", "error");
+      return;
+    }
+
+    downloadFile(
+      safeFilename($("projectName").value) + ".html",
+      html,
+      "text/html;charset=utf-8"
+    );
+  });
+
+  // Initialisation
+  loadSettings();
+  setHtml(STARTER_HTML, false);
+  refreshProjectList();
+
+  if (!projects().length) {
+    activeId = "default";
+    saveProject(false);
+  } else {
+    const p = projects()[0];
+    activeId = p.id;
+    $("projectName").value = p.name || "NOVA X1 — 3D Sneaker";
+    $("siteType").value = p.type || "Product landing page";
+    $("brief").value = p.brief || $("brief").value;
+    setHtml(p.html || STARTER_HTML, false);
+    refreshProjectList();
+  }
+})();
+</script>
+</body>
+</html>
